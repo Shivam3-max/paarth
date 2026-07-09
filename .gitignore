@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# local env files
+.env
+.env.*
+!.env.example
+
+# vite / production
+dist/
+.vite/
+build/
+out/
+.next/
+
+# vercel
+.vercel/
+
+# testing
+coverage/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# system files
+.DS_Store
+Thumbs.db

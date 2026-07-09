@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Nav from './components/Nav.jsx'
 import Footer from './components/Footer.jsx'
+import { BrandMark } from './components/Shared.jsx'
 import SmoothScroll from './motion/SmoothScroll.jsx'
 import Cursor from './motion/Cursor.jsx'
 import Preloader from './motion/Preloader.jsx'
@@ -19,11 +20,27 @@ import Admissions from './pages/Admissions.jsx'
 import Founder from './pages/Founder.jsx'
 import Apply from './pages/Apply.jsx'
 
+function getBooted() {
+  try {
+    return sessionStorage.getItem('paarth-booted') === '1'
+  } catch {
+    return false
+  }
+}
+
+function setBootedFlag() {
+  try {
+    sessionStorage.setItem('paarth-booted', '1')
+  } catch {
+    // Storage can be unavailable in private or locked-down browser contexts.
+  }
+}
+
 export default function App() {
   const location = useLocation()
   const [display, setDisplay] = useState(location)
   const [phase, setPhase] = useState('idle') // idle | cover | reveal
-  const [booted, setBooted] = useState(() => sessionStorage.getItem('paarth-booted') === '1')
+  const [booted, setBooted] = useState(getBooted)
   const timers = useRef([])
 
   // page-transition curtain
@@ -56,7 +73,7 @@ export default function App() {
       {!booted && (
         <Preloader
           onDone={() => {
-            sessionStorage.setItem('paarth-booted', '1')
+            setBootedFlag()
             setBooted(true)
           }}
         />
@@ -70,9 +87,7 @@ export default function App() {
         style={{ transitionTimingFunction: 'cubic-bezier(0.76, 0, 0.24, 1)' }}
         aria-hidden="true"
       >
-        <p className="font-display text-3xl text-paper md:text-4xl">
-          Paarth<span className="text-brass">.</span>
-        </p>
+        <BrandMark textClassName="text-paper md:text-4xl" iconClassName="h-10 w-10" />
       </div>
 
       {booted && (

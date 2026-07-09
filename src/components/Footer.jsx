@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Container, Button } from './Shared.jsx'
+import { Container, Button, BrandLogo } from './Shared.jsx'
 import { Gyro } from '../motion/Object3D.jsx'
 
 const cols = [
@@ -31,6 +31,8 @@ const cols = [
     ],
   },
 ]
+
+const DISHA_URL = import.meta.env.VITE_DISHA_URL || 'http://127.0.0.1:3464'
 
 export default function Footer() {
   const ref = useRef(null)
@@ -66,9 +68,7 @@ export default function Footer() {
         <Gyro size={150} light className="absolute right-6 top-14 hidden opacity-60 lg:block" />
         <div className="grid gap-14 md:grid-cols-[1.4fr_2fr]">
           <div>
-            <p className="font-display text-3xl">
-              Paarth<span className="text-brass">.</span>
-            </p>
+            <BrandLogo className="w-44 max-w-full" />
             <p className="mt-6 max-w-sm text-[0.95rem] leading-relaxed text-paper/60">
               Paarth is a modern space for builders, marketers, and business leaders who want to master marketing,
               use AI intelligently, and build real business capability.
@@ -95,6 +95,13 @@ export default function Footer() {
                       </Link>
                     </li>
                   ))}
+                  {col.head === 'Learn' && (
+                    <li>
+                      <a href={DISHA_URL} className="link-rule text-[0.9rem] text-paper/70 transition-colors hover:text-paper">
+                        Disha Tools
+                      </a>
+                    </li>
+                  )}
                 </ul>
               </div>
             ))}

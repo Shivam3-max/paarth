@@ -23,11 +23,41 @@ function Field({ label, htmlFor, required, children }) {
 
 export default function Apply() {
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
 
-  function onSubmit(e) {
+  async function onSubmit(e) {
     e.preventDefault()
-    setSent(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setError('')
+    setSending(true)
+
+    const form = e.currentTarget
+    const data = Object.fromEntries(new FormData(form).entries())
+
+    try {
+      const response = await fetch('/api/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (response.status === 404) {
+        throw new Error('Application service is not running on this preview. Please test with Vercel dev or the deployed site.')
+      }
+
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok || result.ok === false) {
+        throw new Error(result.message || 'Could not submit your application right now.')
+      }
+
+      setSent(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (err) {
+      setError(err.message || 'Could not submit your application right now.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -67,6 +97,14 @@ export default function Apply() {
             </div>
           ) : (
             <form onSubmit={onSubmit} className="mx-auto grid max-w-2xl gap-7">
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                className="hidden"
+                aria-hidden="true"
+              />
               <div className="grid gap-7 sm:grid-cols-2">
                 <Field label="Full Name" htmlFor="name" required>
                   <input id="name" name="name" required className={inputCls} placeholder="Your full name" />
@@ -108,11 +146,17 @@ export default function Apply() {
               <Field label="Anything else we should know?" htmlFor="more">
                 <textarea id="more" name="more" rows={3} className={inputCls} />
               </Field>
+              {error && (
+                <div className="border border-brass/40 bg-cream px-4 py-3 text-sm leading-relaxed text-ink-soft">
+                  {error}
+                </div>
+              )}
               <button
                 type="submit"
+                disabled={sending}
                 className="mt-2 inline-flex cursor-pointer items-center justify-center gap-2 bg-ink px-8 py-4 text-sm font-semibold tracking-wide text-paper transition-colors duration-200 hover:bg-brass-deep"
               >
-                Submit Application
+                {sending ? 'Submitting...' : 'Submit Application'}
                 <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" strokeWidth="1.4" />
                 </svg>

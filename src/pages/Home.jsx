@@ -215,11 +215,11 @@ export default function Home() {
           }}
           aria-hidden="true"
         />
-        <Container className="relative pb-16 pt-36 md:pb-24 md:pt-48">
-          <div className="grid items-center gap-14 lg:grid-cols-[1.2fr_0.8fr]">
+        <Container className="relative pb-12 pt-32 md:pb-16 md:pt-40 lg:pb-6 lg:pt-24">
+          <div className="grid items-center gap-12 lg:grid-cols-[1.34fr_0.66fr] lg:gap-10">
             <div>
               <Reveal>
-                <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[0.58rem] font-bold uppercase tracking-[0.22em] text-ink-soft/70">
+                <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[0.58rem] font-bold uppercase tracking-[0.22em] text-ink-soft/70">
                   <span className="inline-flex items-center gap-2 border hairline bg-paper/70 px-3 py-1.5 backdrop-blur-sm">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brass" aria-hidden="true" />
                     Systems online — Marketing / AI / Leadership
@@ -234,20 +234,23 @@ export default function Home() {
                   Paarth — The Space for Builders, Marketers &amp; Business Leaders
                 </p>
               </Reveal>
-              <h1 className="mt-8 text-[clamp(1.7rem,9.5vw,2.6rem)] leading-[1.06] md:text-[clamp(3rem,5.6vw,4.6rem)]">
+              <Reveal delay={180} className="mt-6 max-w-xs sm:max-w-sm lg:hidden">
+                <Ph variant="arcs" label="Cohort in session" ratio="aspect-[16/10]" />
+              </Reveal>
+              <h1 className="mt-5 text-[clamp(1.7rem,9.5vw,2.6rem)] leading-[1.04] md:text-[clamp(2.55rem,4.35vw,3.45rem)] lg:max-w-[760px]">
                 <Words>
                   Not everyone needs another course. Some need a place{' '}
                   <em className="serif-i text-brass-deep">that changes how they operate.</em>
                 </Words>
               </h1>
               <Reveal delay={420}>
-                <p className="mt-9 max-w-xl text-lg leading-relaxed text-ink-soft">
+                <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft md:text-lg">
                   Paarth is a modern space for ambitious students, professionals, founders, and operators who want
                   more than information — marketing, AI, and business leadership, taught the way the real world works.
                 </p>
               </Reveal>
               <Reveal delay={520}>
-                <div className="mt-10 flex flex-wrap gap-4">
+                <div className="mt-6 flex flex-wrap gap-4">
                   <Button to="/program">View the Flagship Program</Button>
                   <Button to="/about" variant="outline">Explore Paarth</Button>
                 </div>
@@ -257,12 +260,12 @@ export default function Home() {
             {/* hero art composition */}
             <Reveal delay={300} className="relative hidden lg:block">
               <Parallax speed={7} className="relative">
-                <Ph variant="arcs" label="Cohort in session" ratio="aspect-[4/5]" className="w-[88%]" />
-                <div className="float-y absolute -bottom-10 -right-2 w-[52%] shadow-[0_40px_80px_-40px_rgba(23,21,15,0.4)]">
+                <Ph variant="arcs" label="Cohort in session" ratio="aspect-[4/5]" className="ml-auto w-[78%] max-w-[310px]" />
+                <div className="float-y absolute -bottom-4 right-0 w-[44%] max-w-[160px] shadow-[0_40px_80px_-40px_rgba(23,21,15,0.4)]">
                   <Ph variant="grid" label="Founder-led workshop" ratio="aspect-square" />
                 </div>
-                <RotatingBadge className="absolute -left-12 -top-12 h-28 w-28" />
-                <div className="absolute -left-8 bottom-16 border hairline bg-paper/90 px-5 py-4 backdrop-blur-sm">
+                <RotatingBadge className="absolute left-0 top-0 h-16 w-16" />
+                <div className="absolute left-0 bottom-12 border hairline bg-paper/90 px-4 py-3 backdrop-blur-sm">
                   <p className="font-display text-2xl">
                     50<span className="serif-i text-brass">+</span>
                   </p>
@@ -276,7 +279,7 @@ export default function Home() {
 
           {/* stats bar */}
           <Reveal delay={200}>
-            <div className="mt-20 grid grid-cols-2 gap-8 border-t hairline pt-10 md:mt-28 md:grid-cols-4">
+            <div className="mt-10 grid grid-cols-2 gap-6 border-t hairline pt-7 md:grid-cols-4 lg:mt-8 lg:gap-8 lg:pt-5">
               <Stat value={3} label="Connected disciplines" />
               <Stat value={23} label="Study clusters" />
               <Stat value={50} suffix="+" label="Named frameworks" />

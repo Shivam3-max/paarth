@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import { BrandMark } from './Shared.jsx'
 
 const teachLinks = [
   { to: '/what-we-teach', label: 'Overview' },
@@ -16,6 +17,8 @@ const mainLinks = [
   { to: '/admissions', label: 'Admissions' },
   { to: '/founder', label: 'Founder' },
 ]
+
+const DISHA_URL = import.meta.env.VITE_DISHA_URL || 'http://127.0.0.1:3464'
 
 export default function Nav() {
   const [open, setOpen] = useState(false)
@@ -59,11 +62,11 @@ export default function Nav() {
         aria-hidden="true"
       />
       <div className="mx-auto flex h-[4.5rem] w-full max-w-6xl items-center justify-between px-6 md:px-10">
-        <Link to="/" className="font-display text-[1.45rem] tracking-tight" aria-label="Paarth home">
-          Paarth<span className="text-brass">.</span>
+        <Link to="/" className="shrink-0" aria-label="Paarth home">
+          <BrandMark iconClassName="h-8 w-8" />
         </Link>
 
-        <div className="hidden items-center gap-8 lg:flex">
+        <div className="hidden items-center gap-6 xl:flex">
           <div
             className="relative"
             onMouseEnter={() => setDropOpen(true)}
@@ -108,6 +111,13 @@ export default function Nav() {
             </NavLink>
           ))}
 
+          <a
+            href={DISHA_URL}
+            className="link-rule text-[0.82rem] font-medium tracking-wide text-ink transition-colors hover:text-brass-deep"
+          >
+            Disha
+          </a>
+
           <Link
             to="/apply"
             className="bg-ink px-5 py-2.5 text-[0.8rem] font-semibold tracking-wide text-paper transition-colors hover:bg-brass-deep"
@@ -117,7 +127,7 @@ export default function Nav() {
         </div>
 
         <button
-          className="flex h-10 w-10 cursor-pointer flex-col items-center justify-center gap-1.5 lg:hidden"
+          className="flex h-10 w-10 cursor-pointer flex-col items-center justify-center gap-1.5 xl:hidden"
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? 'Close menu' : 'Open menu'}
           aria-expanded={open}
@@ -128,7 +138,7 @@ export default function Nav() {
       </div>
 
       {open && (
-        <div className="border-t hairline bg-paper px-6 pb-8 pt-4 lg:hidden">
+        <div className="border-t hairline bg-paper px-6 pb-8 pt-4 xl:hidden">
           <p className="eyebrow pt-2">What We Teach</p>
           <div className="mt-2 space-y-1">
             {teachLinks.map((l) => (
@@ -143,6 +153,9 @@ export default function Nav() {
                 {l.label}
               </NavLink>
             ))}
+            <a href={DISHA_URL} className="block py-2 font-display text-xl">
+              Disha
+            </a>
           </div>
           <Link to="/apply" className="mt-6 inline-block bg-ink px-6 py-3 text-sm font-semibold text-paper">
             Apply Now

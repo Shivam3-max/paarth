@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { BrandLogo } from '../components/Shared.jsx'
 
 /** First-visit ink preloader: mono counter 0→100, wordmark, curtain lift.
  *  Driven by wall-clock timers (not rAF) so it can never stall in a background tab. */
@@ -53,9 +54,7 @@ export default function Preloader({ onDone }) {
       style={{ transitionTimingFunction: 'cubic-bezier(0.76, 0, 0.24, 1)' }}
       aria-hidden="true"
     >
-      <p className="font-display text-4xl text-paper md:text-5xl">
-        Paarth<span className="text-brass">.</span>
-      </p>
+      <BrandLogo className="w-52 max-w-[70vw]" />
       <p className="mt-4 font-mono text-[0.65rem] uppercase tracking-[0.3em] text-paper/50">
         The space for builders
       </p>

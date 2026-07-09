@@ -11,11 +11,43 @@ export function Container({ children, className = '' }) {
   return <div className={`mx-auto w-full max-w-6xl px-6 md:px-10 ${className}`}>{children}</div>
 }
 
+export const BRAND_ASSETS = {
+  icon: '/images/placeholders/icon.png',
+  logo: '/images/placeholders/logo-cropped.png',
+}
+
+export function BrandMark({ className = '', textClassName = '', iconClassName = '' }) {
+  return (
+    <span className={`inline-flex items-center gap-3 ${className}`}>
+      <img
+        src={BRAND_ASSETS.icon}
+        alt=""
+        className={`h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-brass/30 ${iconClassName}`}
+        loading="eager"
+      />
+      <span className={`font-display text-[1.45rem] tracking-tight ${textClassName}`}>
+        Paarth<span className="text-brass">.</span>
+      </span>
+    </span>
+  )
+}
+
+export function BrandLogo({ className = '', alt = 'Paarth' }) {
+  return (
+    <img
+      src={BRAND_ASSETS.logo}
+      alt={alt}
+      className={`block h-auto object-contain ${className}`}
+      loading="eager"
+    />
+  )
+}
+
 /* ---------------- buttons ---------------- */
 
 export function Button({ to, children, variant = 'ink', className = '' }) {
   const base =
-    'btn-sweep group/btn inline-flex items-center justify-center gap-3 px-7 py-4 text-[0.82rem] font-semibold tracking-[0.08em] uppercase transition-colors duration-300 cursor-pointer'
+    'btn-sweep group/btn inline-flex max-w-full items-center justify-center gap-3 px-7 py-4 text-center text-[0.82rem] font-semibold leading-tight tracking-[0.08em] uppercase transition-colors duration-300 cursor-pointer'
   const styles = {
     ink: 'bg-ink text-paper',
     outline: 'border border-ink/25 text-ink hover:border-transparent hover:text-paper',
@@ -135,27 +167,75 @@ function ArtRays() {
 
 const ARTS = { arcs: ArtArcs, contour: ArtContour, grid: ArtGrid, rays: ArtRays }
 
-/** Elegant image placeholder — swap for real photography later. */
+const IMAGE_BY_LABEL = {
+  'AI': 'ai.jpg',
+  'AI build session': 'ai.jpg',
+  'Live AI workflows': 'ai.jpg',
+
+  'Marketing': 'marketing.jpg',
+  'Campaign war-room': 'marketing.jpg',
+  'Campaign breakdowns': 'marketing.jpg',
+
+  'Business Leadership': 'leadership.jpg',
+  'Leadership workshop': 'leadership.jpg',
+  'Business breakdowns': 'What Paarth Should Change for You.jpg',
+
+  'Admissions conversation': 'Not everyone needs another course.jpg',
+  'Applied learning': 'What Paarth Should Change for You.jpg',
+  'Cohort in session': 'Not everyone needs another course.jpg',
+  'Fellowship cohort': 'Not everyone needs another course.jpg',
+  'Founder-led workshop': 'Not everyone needs another course.jpg',
+  'In the classroom': 'Not everyone needs another course.jpg',
+  'Live session': 'Not everyone needs another course.jpg',
+  'The three pillars': 'Not everyone needs another course.jpg',
+  'Workshop day': 'Not everyone needs another course.jpg',
+
+  'Build sprint': 'Not a traditional institute.jpg',
+  'Inside Paarth': 'Not a traditional institute.jpg',
+  'Review session': 'Not a traditional institute.jpg',
+  'The Paarth space': 'Not a traditional institute.jpg',
+
+  'Founder portrait': 'founder-portrait.jpg',
+  'The framework library': 'Built by someone who learned business by building it.jpg',
+}
+
+function imageForLabel(label) {
+  const file = IMAGE_BY_LABEL[label]
+  return file ? encodeURI(`/images/placeholders/${file}`) : ''
+}
+
+/** Real image frame with generated SVG art as a final fallback. */
 export function Ph({ label = 'Image placeholder', variant = 'arcs', ratio = 'aspect-[4/3]', className = '' }) {
   const Art = ARTS[variant] || ArtArcs
+  const src = imageForLabel(label)
   return (
     <ClipReveal className={className}>
       <figure data-skew data-cursor="View" className={`group relative overflow-hidden border hairline bg-cream ${ratio}`}>
         <div className="absolute inset-0">
-          <Art />
+          {src ? (
+            <img
+              src={src}
+              alt={label}
+              className="h-full w-full object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.04]"
+              loading="lazy"
+            />
+          ) : (
+            <Art />
+          )}
+          <span className="absolute inset-0 bg-gradient-to-t from-ink/20 via-transparent to-transparent" aria-hidden="true" />
         </div>
       {/* corner ticks */}
       <span className="absolute left-3 top-3 h-2.5 w-2.5 border-l border-t border-ink/30" aria-hidden="true" />
       <span className="absolute right-3 top-3 h-2.5 w-2.5 border-r border-t border-ink/30" aria-hidden="true" />
       <span className="absolute bottom-3 left-3 h-2.5 w-2.5 border-b border-l border-ink/30" aria-hidden="true" />
       <span className="absolute bottom-3 right-3 h-2.5 w-2.5 border-b border-r border-ink/30" aria-hidden="true" />
-        <figcaption className="absolute bottom-4 left-4 inline-flex items-center gap-2 border hairline bg-paper/85 px-3 py-1.5 backdrop-blur-sm">
+        <figcaption className="absolute bottom-4 left-4 inline-flex max-w-[calc(100%-2rem)] items-center gap-2 border hairline bg-paper/85 px-3 py-1.5 backdrop-blur-sm">
           <svg className="h-3 w-3 text-brass" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <rect x="1.5" y="3" width="13" height="10" rx="1" stroke="currentColor" />
             <circle cx="5.5" cy="6.5" r="1.2" fill="currentColor" />
             <path d="m3 11 3.2-3 2.6 2.4L11 8l2.5 3" stroke="currentColor" strokeWidth="1" />
           </svg>
-          <span className="font-mono text-[0.58rem] font-bold uppercase tracking-[0.16em] text-ink-soft">{label}</span>
+          <span className="truncate font-mono text-[0.58rem] font-bold uppercase tracking-[0.16em] text-ink-soft">{label}</span>
         </figcaption>
       </figure>
     </ClipReveal>
@@ -268,7 +348,7 @@ export function PageHero({ eyebrow, title, copy, art, artVariant = 'arcs', artLa
       {!(art || artLabel) && (
         <Lazy3D kind={three} className="absolute right-[6%] top-24 hidden h-72 w-72 opacity-90 lg:block" />
       )}
-      <Container className="pt-36 pb-16 md:pt-48 md:pb-24">
+      <Container className="pb-14 pt-32 md:pb-20 md:pt-40 lg:pb-20 lg:pt-36">
         <div className={art || artLabel ? 'grid items-end gap-12 lg:grid-cols-[1.25fr_0.75fr]' : ''}>
           <div>
             <Reveal>
@@ -277,7 +357,7 @@ export function PageHero({ eyebrow, title, copy, art, artVariant = 'arcs', artLa
                 <Decode text={typeof eyebrow === 'string' ? eyebrow : ''} />
               </p>
             </Reveal>
-            <h1 className="mt-7 max-w-4xl text-[clamp(1.6rem,9vw,2.4rem)] leading-[1.06] md:text-[clamp(2.6rem,5vw,4rem)]">
+            <h1 className="mt-7 max-w-4xl text-[clamp(1.6rem,9vw,2.4rem)] leading-[1.06] md:text-[clamp(2.5rem,4.6vw,3.75rem)]">
               <Words>{title}</Words>
             </h1>
             {copy && (
@@ -288,11 +368,11 @@ export function PageHero({ eyebrow, title, copy, art, artVariant = 'arcs', artLa
             {children && <Reveal delay={300}>{children}</Reveal>}
           </div>
           {(art || artLabel) && (
-            <Reveal delay={250} className="relative hidden lg:block">
-              <Lazy3D kind={three} className="absolute -top-32 left-1/2 h-56 w-56 -translate-x-1/2" />
+            <Reveal delay={250} className="relative mt-10 max-w-sm sm:max-w-md lg:mt-0 lg:block lg:max-w-none">
+              <Lazy3D kind={three} className="absolute -top-24 left-1/2 hidden h-44 w-44 -translate-x-1/2 lg:block" />
               {art || <Ph variant={artVariant} label={artLabel} ratio="aspect-[4/5]" />}
-              <RotatingBadge className="absolute -left-10 -top-10 h-24 w-24" />
-              <Gyro size={92} className="absolute -bottom-8 -right-8" />
+              <RotatingBadge className="absolute -left-8 -top-8 hidden h-20 w-20 lg:block" />
+              <Gyro size={78} className="absolute -bottom-6 -right-6 hidden lg:block" />
             </Reveal>
           )}
         </div>
