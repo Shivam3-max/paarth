@@ -239,14 +239,15 @@ export default function Home() {
               </Reveal>
               <h1 className="mt-5 text-[clamp(1.7rem,9.5vw,2.6rem)] leading-[1.04] md:text-[clamp(2.55rem,4.35vw,3.45rem)] lg:max-w-[760px]">
                 <Words>
-                  Not everyone needs another course. Some need a place{' '}
-                  <em className="serif-i text-brass-deep">that changes how they operate.</em>
+                  A degree makes you eligible.{' '}
+                  <em className="serif-i text-brass-deep">Capability makes you chosen.</em>
                 </Words>
               </h1>
               <Reveal delay={420}>
-                <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft md:text-lg">
-                  Paarth is a modern space for ambitious students, professionals, founders, and operators who want
-                  more than information — marketing, AI, and business leadership, taught the way the real world works.
+<p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft md:text-lg">
+                  Paarth is a modern space for ambitious students and freshers who refuse to be just another resume.
+                  Learn marketing, AI, and business leadership the way the real world works — and graduate with
+                  capability, a portfolio, and a career edge.
                 </p>
               </Reveal>
               <Reveal delay={520}>
