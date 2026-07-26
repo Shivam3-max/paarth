@@ -6,6 +6,7 @@ import Lazy3D from '../motion/Lazy3D.jsx'
 
 const stages = ['Student', 'Working Professional', 'Founder / Business Owner', 'Marketer / Freelancer / Operator', 'Other']
 const focuses = ['Marketing', 'AI', 'Business Leadership', 'A combination']
+const APPLICATION_API_URL = import.meta.env.VITE_APPLICATION_API_URL || '/send-mail.php'
 
 const inputCls =
   'w-full border hairline bg-paper px-4 py-3 text-[0.95rem] text-ink placeholder:text-ink-soft/50 outline-none transition-colors focus:border-brass'
@@ -35,14 +36,16 @@ export default function Apply() {
     const data = Object.fromEntries(new FormData(form).entries())
 
     try {
-      const response = await fetch('/api/apply', {
+      const response = await fetch(APPLICATION_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
 
       if (response.status === 404) {
-        throw new Error('Application service is not running on this preview. Please test with Vercel dev or the deployed site.')
+        throw new Error(
+          'Application service is not available on this deployment. Configure VITE_APPLICATION_API_URL to point at a live backend endpoint.',
+        )
       }
 
       const result = await response.json().catch(() => ({}))
@@ -54,7 +57,12 @@ export default function Apply() {
       setSent(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
-      setError(err.message || 'Could not submit your application right now.')
+      const fallback =
+        err instanceof TypeError
+          ? 'Could not reach the application service. Check that the backend endpoint is deployed and accessible from this domain.'
+          : 'Could not submit your application right now.'
+
+      setError(err.message || fallback)
     } finally {
       setSending(false)
     }
