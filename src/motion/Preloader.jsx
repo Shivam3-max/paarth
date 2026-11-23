@@ -1,76 +1,50 @@
-import { useEffect, useRef, useState } from 'react'
-import { BrandLogo } from '../components/Shared.jsx'
+import { useEffect, useRef } from 'react'
+import gsap from 'gsap'
+import { LogoMark } from '../components/Logo.jsx'
 
-/** First-visit ink preloader: mono counter 0→100, wordmark, curtain lift.
- *  Driven by wall-clock timers (not rAF) so it can never stall in a background tab. */
-const BOOT_LINES = [
-  'INITIALIZING CAPABILITY SYSTEM …',
-  'LOADING FRAMEWORKS [50+] — OK',
-  'CALIBRATING PILLARS [3/3] — OK',
-  'MARKETING / AI / LEADERSHIP — ONLINE',
-]
-
+/** 000 → 360° counter, then the curtain splits open. */
 export default function Preloader({ onDone }) {
-  const [n, setN] = useState(0)
-  const [lift, setLift] = useState(false)
-  const done = useRef(false)
+  const root = useRef(null)
+  const num = useRef(null)
+  const bar = useRef(null)
 
   useEffect(() => {
-    const t0 = performance.now()
-    const dur = 1500
-
-    const finish = () => {
-      if (done.current) return
-      done.current = true
-      setN(100)
-      setLift(true)
-      setTimeout(onDone, 900)
-    }
-
-    const id = setInterval(() => {
-      const p = Math.min(1, (performance.now() - t0) / dur)
-      const eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2
-      setN(Math.round(eased * 100))
-      if (p >= 1) {
-        clearInterval(id)
-        finish()
-      }
-    }, 40)
-
-    // hard failsafe — never trap the user behind the curtain
-    const failsafe = setTimeout(finish, 4000)
-
-    return () => {
-      clearInterval(id)
-      clearTimeout(failsafe)
-    }
-  }, [onDone])
+    const counter = { v: 0 }
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ onComplete: onDone })
+      tl.to(counter, {
+        v: 360,
+        duration: 1.9,
+        ease: 'power2.inOut',
+        onUpdate: () => {
+          if (num.current) num.current.textContent = String(Math.round(counter.v)).padStart(3, '0')
+        },
+      })
+        .to(bar.current, { scaleX: 1, duration: 1.9, ease: 'power2.inOut' }, 0)
+        .to('[data-pre-fade]', { opacity: 0, y: -20, duration: 0.5, ease: 'power2.in' }, '+=0.15')
+        .to('[data-pre-top]', { yPercent: -100, duration: 0.9, ease: 'expo.inOut' }, '-=0.1')
+        .to('[data-pre-bot]', { yPercent: 100, duration: 0.9, ease: 'expo.inOut' }, '<')
+    }, root)
+    return () => ctx.revert()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div
-      className={`fixed inset-0 z-[90] flex flex-col items-center justify-center bg-ink transition-transform duration-[900ms] ${
-        lift ? '-translate-y-full' : ''
-      }`}
-      style={{ transitionTimingFunction: 'cubic-bezier(0.76, 0, 0.24, 1)' }}
-      aria-hidden="true"
-    >
-      <BrandLogo className="w-52 max-w-[70vw]" />
-      <p className="mt-4 font-mono text-[0.65rem] uppercase tracking-[0.3em] text-paper/50">
-        The space for builders
-      </p>
-      <div className="mt-8 h-14 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-brass/80">
-        {BOOT_LINES.map((l, i) => (
-          <p key={l} className={n >= (i + 1) * 22 ? 'opacity-100' : 'opacity-20'}>
-            {l}
+    <div ref={root} className="fixed inset-0 z-[95]" aria-hidden="true">
+      <div data-pre-top className="absolute inset-x-0 top-0 h-1/2 bg-void" />
+      <div data-pre-bot className="absolute inset-x-0 bottom-0 h-1/2 bg-void" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div data-pre-fade className="flex flex-col items-center">
+          <LogoMark className="h-12 w-12 text-ivory" />
+          <p className="display mt-8 text-7xl font-semibold tabular-nums md:text-9xl">
+            <span ref={num}>000</span>
+            <span className="text-gold">°</span>
           </p>
-        ))}
+          <div className="mt-8 h-px w-56 overflow-hidden bg-ivory/10">
+            <div ref={bar} className="h-full origin-left scale-x-0 bg-gold" />
+          </div>
+          <p className="mono mt-5 text-mist">Calibrating the all-in-one operator</p>
+        </div>
       </div>
-      <p className="absolute bottom-10 right-10 font-mono text-5xl text-paper/80 md:text-6xl">
-        {String(n).padStart(3, '0')}
-      </p>
-      <span className="absolute bottom-10 left-10 font-mono text-[0.6rem] uppercase tracking-[0.3em] text-paper/40">
-        EST. 2026 — IN
-      </span>
     </div>
   )
 }

@@ -1,500 +1,525 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Reveal from '../components/Reveal.jsx'
-import {
-  Container, Button, SectionHead, NumberedCard, CTABand, ListRow,
-  Ph, RotatingBadge, Stat, Ticker,
-} from '../components/Shared.jsx'
-import { Words, ScrubText, Decode } from '../motion/Text.jsx'
-import { Parallax } from '../motion/Effects.jsx'
-import { Gyro, Cube, Deck } from '../motion/Object3D.jsx'
-import Constellation from '../motion/Constellation.jsx'
+import { gsap, Magnetic, SplitText, reduced, scrollToTarget, usePageMotion } from '../motion/core.jsx'
+import Countdown from '../components/Countdown.jsx'
+import { MASTERCLASS, formatSession, nextSession } from '../config.js'
 
-gsap.registerPlugin(ScrollTrigger)
-
-const capabilities = [
-  { title: 'Think Clearly', copy: 'Understand customers, markets, business models, and strategic positioning.' },
-  { title: 'Build Better', copy: 'Create campaigns, websites, content systems, offers, and AI workflows that actually support growth.' },
-  { title: 'Lead Execution', copy: 'Improve communication, sales ability, productivity, accountability, and day-to-day decision-making.' },
-  { title: 'Scale with Systems', copy: 'Learn SOPs, dashboards, hiring systems, management rhythms, and the operational thinking that businesses need to grow.' },
+const SKILLS = [
+  'Video editing', 'Design', 'Sales closing', 'CRM building', 'Decision making', 'Ads & funnels',
+  'Automation', 'Public speaking', 'Websites', 'Negotiation', 'Copywriting', 'Team leading',
 ]
 
-const audiences = [
-  { title: 'Students', copy: 'For students who want more than a degree and want to build practical business capability early.' },
-  { title: 'Working Professionals', copy: 'For professionals who want to become more valuable, more AI-enabled, and more leadership-ready.' },
-  { title: 'Founders & Business Owners', copy: 'For people who want better marketing, sharper systems, stronger sales, and more scalable businesses.' },
-  { title: 'Agency Builders & Operators', copy: 'For people who want to grow as marketers, consultants, operators, and modern business builders.' },
-]
-
-const pillars = [
+const PILLARS = [
   {
-    num: '01',
-    title: 'Marketing',
-    lead: 'Learn how attention is earned, demand is created, and growth is turned into revenue.',
-    copy: 'Brand strategy, content systems, funnels, paid media, consumer psychology, SEO, analytics — taught as business capability, not platform activity.',
-    to: '/marketing',
-    variant: 'rays',
+    n: '01', word: 'LEAD', title: 'Leadership',
+    line: 'Decide fast. Speak clearly. Own the room.',
+    chips: ['Decision making', 'Communication', 'Team handling', 'Negotiation'],
+    gl: '1,2.7,0,0.95,1', side: 'left',
   },
   {
-    num: '02',
-    title: 'AI',
-    lead: 'Use AI to think faster, build faster, create better, and remove repetitive work.',
-    copy: 'Research, content creation, website building, automation, and digital execution — AI at Paarth is taught as leverage, not hype.',
-    to: '/ai',
-    variant: 'grid',
+    n: '02', word: 'MARKET', title: 'Marketing & sales',
+    line: 'Make people want it. Then close the deal.',
+    chips: ['Branding', 'Content', 'Ads & funnels', 'Sales closing'],
+    gl: '2,-2.7,0,0.95,1', side: 'right',
   },
   {
-    num: '03',
-    title: 'Business Leadership',
-    lead: 'Learn how businesses are communicated, sold, managed, systemized, and scaled.',
-    copy: 'Sales, communication, hiring, finance, SOPs, performance systems, and scale — taught as practical, learnable capabilities.',
-    to: '/business-leadership',
-    variant: 'arcs',
+    n: '03', word: 'BUILD', title: 'AI for execution',
+    line: 'Do the work of a whole team. Alone.',
+    chips: ['Video editing', 'Design', 'CRMs & automation', 'Websites'],
+    gl: '3,2.7,0,0.9,1', side: 'left',
   },
 ]
 
-const differences = [
-  { title: 'Founder-led, not template-led', copy: 'Shaped by real entrepreneurial and agency experience — built by someone who had to learn by doing and build in the real world.' },
-  { title: 'Marketing beyond surface tactics', copy: 'Not just content calendars and ad dashboards. People, demand, messaging, trust, and the mechanics of growth.' },
-  { title: 'AI as leverage, not noise', copy: 'No random tool collections. No shallow prompt tricks. Only where AI actually makes work faster and better.' },
-  { title: 'Leadership as a practical skill', copy: 'Communication, persuasion, sales, hiring, systems, and execution — treated as real business capabilities, not vague “soft skills.”' },
-  { title: 'Framework-driven learning', copy: 'You leave with frameworks, mental models, and systems you can apply under pressure — not just ideas you remember.' },
-  { title: 'Built for the real world', copy: 'Designed to make you more useful in actual work, business, and leadership contexts — not just complete another course.' },
+const SWAPS = [
+  ['Video editing', '6 months of Premiere Pro', 'Minutes, with AI'],
+  ['Graphic design', 'A Photoshop course', 'One prompt'],
+  ['A CRM', 'Hiring a developer', 'Built by you, in a day'],
+  ['A website', 'Paying an agency', 'Live by evening'],
+  ['Sales copy', 'Hiring a copywriter', 'Drafted in seconds'],
 ]
 
-const outcomes = [
-  'understand markets and customer behavior with more clarity',
-  'position products, services, or personal brands more effectively',
-  'use AI for research, content, websites, and workflows',
-  'communicate ideas with more conviction',
-  'sell products, services, and ideas more effectively',
-  'think in systems instead of isolated tasks',
-  'manage execution and productivity more intentionally',
-  'understand how businesses grow, hire, operate, and scale',
+const STAGES = [
+  ['Learn', 'Lead, sell and create with AI.'],
+  ['Pick', 'Choose a business you’ll actually run.'],
+  ['Build', 'Brand, offer, website, CRM — made by you.'],
+  ['Launch', 'Go live. Land your first customer.'],
+  ['Scale', 'Systems, ads, a team. Grow it.'],
 ]
 
-const hooks = [
-  'The market has changed. Most education hasn’t.',
-  'Capability matters more than information.',
-  'Learn how business actually works.',
-  'Use AI with judgment, not just curiosity.',
-  'Marketing is more than content. Leadership is more than confidence.',
-  'Build attention. Use leverage. Lead execution.',
-]
+const Arrow = () => <span className="arrow inline-block">→</span>
 
-function HorizontalPillars() {
-  const wrapRef = useRef(null)
-  const trackRef = useRef(null)
+/* ───────────────────────── HERO ───────────────────────── */
+function Hero({ ready }) {
+  const ref = useRef(null)
+  const ctxRef = useRef(null)
+  const splitRef = useRef(null)
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const split = new SplitText('[data-hero-title]', { type: 'lines,chars', mask: 'lines' })
+      split.chars.forEach((c) => c.parentElement.closest('.gold-text') && c.classList.add('gold-text'))
+      splitRef.current = split
+      gsap.set(split.chars, { yPercent: 120 })
+      gsap.set('[data-hero-in]', { opacity: 0, y: 24 })
+    }, ref)
+    ctxRef.current = ctx
+    return () => ctx.revert()
+  }, [])
 
   useEffect(() => {
-    const mm = gsap.matchMedia()
-    mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
-      const track = trackRef.current
-      const amount = () => track.scrollWidth - window.innerWidth
-      const tween = gsap.to(track, {
-        x: () => -amount(),
-        ease: 'none',
+    if (!ready) return
+    ctxRef.current.add(() => {
+      const tl = gsap.timeline({ delay: 0.1 })
+      tl.to(splitRef.current.chars, { yPercent: 0, duration: 1.4, ease: 'expo.out', stagger: 0.045 })
+        .to('[data-hero-in]', { opacity: 1, y: 0, duration: 1.1, ease: 'expo.out', stagger: 0.08 }, '-=1.0')
+      if (!reduced()) {
+        gsap.to('[data-hero-title]', {
+          yPercent: -18,
+          opacity: 0.2,
+          ease: 'none',
+          scrollTrigger: { trigger: ref.current, start: 'top top', end: 'bottom top', scrub: true },
+        })
+      }
+    })
+  }, [ready])
+
+  return (
+    <section ref={ref} data-gl="0,1.9,0.2,1,1" className="relative flex min-h-[100svh] flex-col justify-end px-5 pb-10 pt-32 md:px-10 md:pb-14">
+      <div className="mx-auto w-full max-w-7xl">
+        <p data-hero-in className="mono flex flex-wrap items-center gap-x-3 gap-y-2 text-mist">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gold" />
+          <span>Leadership</span> <span className="text-gold">/</span> <span>Marketing</span> <span className="text-gold">/</span> <span className="whitespace-nowrap">AI for execution</span>
+        </p>
+        <h1 data-hero-title className="display mt-6 text-[15.5vw] font-semibold uppercase md:text-[12.5vw] lg:text-[11.5rem]">
+          Become <br />
+          <span className="gold-text">360°</span>
+        </h1>
+        <div className="mt-8 flex flex-col gap-8 md:mt-10 md:flex-row md:items-end md:justify-between">
+          <p data-hero-in className="max-w-md text-lg leading-snug text-ivory/75 md:text-xl">
+            The all-in-one operator. <span className="serif text-2xl text-ivory">Leads, sells, creates and builds</span> — with AI doing the heavy lifting.
+          </p>
+          <div data-hero-in className="flex flex-wrap items-center gap-3">
+            <Magnetic>
+              <Link to="/masterclass" className="btn btn-gold">
+                Free 1-hr masterclass <Arrow />
+              </Link>
+            </Magnetic>
+            <button onClick={() => scrollToTarget('#pillars')} className="btn btn-ghost">
+              What you learn <span className="arrow inline-block rotate-90">→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SkillMarquee() {
+  const row = [...SKILLS, ...SKILLS]
+  return (
+    <div className="relative z-10 overflow-hidden border-y border-white/10 bg-void/40 py-5 backdrop-blur-sm">
+      <div className="marquee">
+        {row.map((s, i) => (
+          <span key={i} className="display flex items-center whitespace-nowrap px-6 text-2xl font-light uppercase text-ivory/80 md:text-4xl">
+            {s}
+            <span className="ml-12 text-gold">✦</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ───────────────────────── MANIFESTO ───────────────────────── */
+function Manifesto() {
+  return (
+    <section data-gl="0,0,0,1.55,0.35" className="relative px-5 py-40 md:px-10 md:py-56">
+      <div className="mx-auto max-w-6xl">
+        <p className="mono mb-10 text-gold" data-scramble>The shift</p>
+        <p data-scrub className="display text-[2.1rem] font-normal leading-[1.08] tracking-[-0.03em] md:text-[4.6rem]">
+          Companies don’t want specialists anymore. They want the one person who can think, create, sell — and ship it with AI.
+        </p>
+        <p data-fade className="serif mt-12 text-3xl text-gold md:text-4xl">That person is built here.</p>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────── PILLARS ───────────────────────── */
+function Pillar({ p }) {
+  const right = p.side === 'right'
+  return (
+    <section data-gl={p.gl} className="relative flex min-h-[115vh] items-center overflow-hidden px-5 py-28 md:px-10">
+      <p
+        data-word
+        className="display stroke-text pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 whitespace-nowrap text-[34vw] font-bold leading-none opacity-60"
+        aria-hidden="true"
+      >
+        {p.word} {p.word}
+      </p>
+      <div className={`relative mx-auto flex w-full max-w-7xl ${right ? 'lg:justify-end' : ''}`}>
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-4">
+            <span className="display text-6xl font-bold text-gold md:text-8xl" data-fade>{p.n}</span>
+            <span className="h-px flex-1 bg-gradient-to-r from-gold/60 to-transparent" />
+            <span className="mono text-mist" data-scramble>{p.title}</span>
+          </div>
+          <h3 data-split className="display mt-8 text-6xl font-semibold uppercase md:text-[5.6rem]">
+            {p.word}
+          </h3>
+          <p data-fade className="serif mt-6 text-3xl leading-tight text-ivory/90 md:text-[2.6rem]">{p.line}</p>
+          <ul className="mt-10 grid grid-cols-2 gap-3">
+            {p.chips.map((c, i) => (
+              <li key={c} data-fade={i * 0.08} className="glass hud flex items-center gap-3 rounded-xl px-4 py-4 text-[0.95rem]">
+                <span className="font-mono text-[0.62rem] text-gold">{p.n}.{i + 1}</span>
+                {c}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Pillars() {
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    if (reduced()) return
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray('[data-word]').forEach((el, i) => {
+        gsap.fromTo(
+          el,
+          { xPercent: i % 2 ? -35 : 0 },
+          {
+            xPercent: i % 2 ? 0 : -35,
+            ease: 'none',
+            scrollTrigger: { trigger: el.parentElement, start: 'top bottom', end: 'bottom top', scrub: true },
+          },
+        )
+      })
+    }, ref)
+    return () => ctx.revert()
+  }, [])
+  return (
+    <div ref={ref} id="pillars">
+      <div className="px-5 pt-10 md:px-10">
+        <div className="mx-auto max-w-7xl">
+          <p className="mono text-mist" data-scramble>Three skills. One person.</p>
+        </div>
+      </div>
+      {PILLARS.map((p) => (
+        <Pillar key={p.n} p={p} />
+      ))}
+    </div>
+  )
+}
+
+/* ───────────────────────── 360 OPERATOR DIAL ───────────────────────── */
+function Operator() {
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const nodes = gsap.utils.toArray('[data-node]')
+      const tl = gsap.timeline({
         scrollTrigger: {
-          trigger: wrapRef.current,
+          trigger: ref.current,
           start: 'top top',
-          end: () => '+=' + amount(),
-          scrub: 1,
-          pin: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
+          end: 'bottom bottom',
+          scrub: 0.8,
+          onUpdate: (self) => {
+            const n = Math.min(SKILLS.length, Math.floor(self.progress * (SKILLS.length + 1)))
+            ref.current?.querySelectorAll('[data-count]').forEach((c) => { c.textContent = String(n).padStart(2, '0') })
+          },
         },
       })
-      return () => {
-        tween.scrollTrigger?.kill()
-        tween.kill()
-      }
+      tl.to('[data-dial]', { rotate: -120, ease: 'none', duration: 1 }, 0)
+      tl.to('[data-node-inner]', { rotate: 120, ease: 'none', duration: 1 }, 0)
+      tl.fromTo('[data-arc]', { strokeDashoffset: 1 }, { strokeDashoffset: 0, ease: 'none', duration: 1 }, 0)
+      nodes.forEach((n, i) => {
+        tl.to(n, { '--on': 1, duration: 0.05 }, ((i % SKILLS.length) + 1) / (SKILLS.length + 1))
+      })
+    }, ref)
+    return () => ctx.revert()
+  }, [])
+
+  return (
+    <section ref={ref} id="operator" className="relative h-[320vh]">
+      <div
+        data-gl="4,0,0,1,0.85"
+        className="sticky top-0 flex h-[100svh] flex-col items-center justify-center gap-5 overflow-hidden px-5 pt-16 md:block md:px-0 md:pt-0"
+      >
+        <div className="w-full md:absolute md:left-10 md:top-28 md:w-auto md:max-w-xs">
+          <p className="mono text-gold">The 360° operator</p>
+          <h2 className="display mt-3 text-[2rem] font-semibold uppercase leading-[0.95] md:mt-4 md:text-5xl">
+            One person.<br />Every skill.
+          </h2>
+        </div>
+        <div className="absolute bottom-12 right-10 hidden text-right md:block">
+          <p className="display text-7xl font-semibold tabular-nums">
+            <span data-count>00</span>
+            <span className="text-dim">/{SKILLS.length}</span>
+          </p>
+          <p className="mono mt-2 text-mist">Skills unlocked</p>
+        </div>
+
+        <div className="relative aspect-square w-[min(70vw,36svh)] shrink-0 [--r:min(70vw,36svh)] md:absolute md:left-1/2 md:top-1/2 md:w-[min(84vw,68vh)] md:-translate-x-1/2 md:-translate-y-1/2 md:[--r:min(84vw,68vh)]">
+          <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden="true">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(241,238,230,0.12)" strokeWidth="0.25" strokeDasharray="0.6 1.2" />
+            <circle data-arc cx="50" cy="50" r="40" fill="none" stroke="#E9B44C" strokeWidth="0.5" pathLength="1" strokeDasharray="1" />
+          </svg>
+          <div data-dial className="absolute inset-0">
+            {SKILLS.map((s, i) => {
+              const a = (i / SKILLS.length) * 360
+              return (
+                <div
+                  key={s}
+                  className="absolute left-1/2 top-1/2 h-0 w-0"
+                  style={{ transform: `rotate(${a}deg) translateY(calc(var(--r) * -0.4)) rotate(${-a}deg)` }}
+                >
+                  <div data-node-inner>
+                    <div
+                      data-node
+                      style={{ '--on': 0 }}
+                      className="absolute left-0 top-0 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap rounded-full p-1 md:border md:px-3 md:py-1.5 md:text-sm md:backdrop-blur-md"
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full md:h-1.5 md:w-1.5"
+                        style={{ background: 'color-mix(in srgb, #E9B44C calc(var(--on) * 100%), #5D5C66)' }}
+                      />
+                      <span className="hidden md:inline" style={{ opacity: 'calc(0.4 + var(--on) * 0.6)' }}>{s}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <p className="mono text-mist">You</p>
+            <p className="display gold-text text-5xl font-bold md:text-8xl">360°</p>
+          </div>
+        </div>
+
+        {/* mobile: skills as chips that light up */}
+        <ul className="flex max-w-sm flex-wrap justify-center gap-1.5 md:hidden">
+          {SKILLS.map((s) => (
+            <li
+              key={s}
+              data-node
+              style={{
+                '--on': 0,
+                borderColor: 'color-mix(in srgb, #E9B44C calc(var(--on) * 70%), rgba(255,255,255,0.12))',
+                opacity: 'calc(0.45 + var(--on) * 0.55)',
+              }}
+              className="rounded-full border px-3 py-1.5 text-[0.78rem]"
+            >
+              {s}
+            </li>
+          ))}
+        </ul>
+        <p className="mono text-mist md:hidden">
+          <span data-count className="text-ivory">00</span>/{SKILLS.length} skills unlocked
+        </p>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────── NO SOFTWARE ───────────────────────── */
+function NoSoftware() {
+  const ref = useRef(null)
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray('[data-swap]').forEach((row) => {
+        const tl = gsap.timeline({ scrollTrigger: { trigger: row, start: 'top 78%' } })
+        tl.fromTo(row.querySelector('[data-strike]'), { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: 'power3.inOut' })
+          .to(row.querySelector('[data-old]'), { opacity: 0.45, duration: 0.4 }, '<0.3')
+          .fromTo(row.querySelector('[data-new]'), { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.6, ease: 'expo.out' }, '-=0.1')
+      })
+    }, ref)
+    return () => ctx.revert()
+  }, [])
+  return (
+    <section ref={ref} data-gl="4,0,0,1.7,0.3" className="relative px-5 py-36 md:px-10 md:py-48">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-20">
+          <div>
+            <p className="mono text-gold" data-scramble>No software. Just AI.</p>
+            <h2 data-split className="display mt-6 text-5xl font-semibold uppercase md:text-7xl">Zero tools to master.</h2>
+            <p data-fade className="mt-8 max-w-sm text-lg text-ivory/65">
+              Skip years of software courses. AI does the heavy lifting — you make the calls.
+            </p>
+          </div>
+          <ul className="border-t border-white/10">
+            {SWAPS.map(([what, old, now]) => (
+              <li key={what} data-swap className="grid grid-cols-1 gap-1 border-b border-white/10 py-6 sm:grid-cols-[9rem_1fr_1fr] sm:items-center sm:gap-6">
+                <span className="mono text-mist">{what}</span>
+                <span className="relative w-fit text-lg text-ivory/80">
+                  <span data-old>{old}</span>
+                  <span data-strike className="absolute left-0 top-1/2 h-[2px] w-full origin-left bg-ember" />
+                </span>
+                <span data-new className="flex items-center gap-2 text-lg font-medium text-gold">
+                  <span aria-hidden="true">↳</span> {now}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────── BUSINESS (horizontal) ───────────────────────── */
+function Business() {
+  const ref = useRef(null)
+  const track = useRef(null)
+  const stageNo = useRef(null)
+  useLayoutEffect(() => {
+    const mm = gsap.matchMedia()
+    mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
+      gsap.to(track.current, {
+        x: () => -(track.current.scrollWidth - window.innerWidth),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: ref.current,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 0.6,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            gsap.set('[data-progress]', { scaleX: self.progress })
+            if (stageNo.current) stageNo.current.textContent = '0' + Math.min(5, Math.max(1, Math.ceil(self.progress * 5.6)))
+          },
+        },
+      })
     })
     return () => mm.revert()
   }, [])
 
   return (
-    <section className="relative overflow-hidden bg-ink text-paper">
-      {/* desktop: pinned horizontal scroll */}
-      <div ref={wrapRef} className="hidden lg:block">
-        <div ref={trackRef} className="flex h-screen w-max items-stretch">
-          {/* intro panel */}
-          <div className="relative flex w-[44vw] shrink-0 flex-col justify-center border-r border-paper/10 px-16">
-            <Gyro size={170} light className="absolute right-10 top-14 opacity-70" />
-            <p className="eyebrow flex items-center gap-3">
-              <span className="inline-block h-px w-10 bg-brass" aria-hidden="true" />
-              <Decode text="The Three Learning Pillars" /> <span className="text-paper/40">[ 04 ]</span>
-            </p>
-            <h2 className="mt-7 text-5xl leading-[1.08] text-paper">
-              <Words>Three disciplines. One operating advantage.</Words>
+    <section ref={ref} id="business" className="relative lg:h-[420vh]">
+      <div data-gl="5,2.6,-0.2,0.95,0.9" className="lg:sticky lg:top-0 lg:h-[100svh] lg:overflow-hidden">
+        <div ref={track} className="flex flex-col lg:h-full lg:w-max lg:flex-row lg:items-center">
+          <div className="flex shrink-0 flex-col justify-center px-5 py-28 md:px-10 lg:w-[62vw] lg:py-0 lg:pl-[max(2.5rem,calc((100vw-80rem)/2+2.5rem))]">
+            <p className="mono text-gold">The big one</p>
+            <h2 className="display mt-6 text-5xl font-semibold uppercase leading-[0.92] md:text-[6.2rem]">
+              Every student <span className="gold-text">starts a business.</span>
             </h2>
-            <p className="mt-7 max-w-md text-lg leading-relaxed text-paper/60">
-              Paarth brings together three areas that increasingly define modern business relevance — taught in a
-              connected, practical way.
-            </p>
-            <p className="mt-12 flex items-center gap-3 font-mono text-[0.62rem] uppercase tracking-[0.3em] text-paper/40">
-              Keep scrolling
-              <svg className="h-3.5 w-3.5 text-brass" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" strokeWidth="1.4" />
-              </svg>
-            </p>
+            <p className="serif mt-8 max-w-md text-3xl text-ivory/80">Not a project. A real one — that you run and scale.</p>
           </div>
-          {pillars.map((p) => (
-            <Link
-              key={p.title}
-              to={p.to}
-              data-cursor="Enter"
-              className="group relative flex w-[58vw] shrink-0 flex-col justify-between border-r border-paper/10 px-16 py-20 transition-colors duration-500 hover:bg-[#201d15]"
-            >
-              <span className="absolute left-6 top-6 h-3 w-3 border-l border-t border-paper/30" aria-hidden="true" />
-              <span className="absolute right-6 top-6 h-3 w-3 border-r border-t border-paper/30" aria-hidden="true" />
-              <span className="absolute bottom-6 left-6 h-3 w-3 border-b border-l border-paper/30" aria-hidden="true" />
-              <span className="absolute bottom-6 right-6 h-3 w-3 border-b border-r border-paper/30" aria-hidden="true" />
-              <p className="absolute right-10 top-8 font-mono text-[0.55rem] uppercase tracking-[0.28em] text-paper/40">
-                Sector 04.{p.num} / Capability grid
-              </p>
-              <div className="flex items-start justify-between gap-8">
-                <span className="watermark-num text-[9rem] leading-none" style={{ WebkitTextStroke: '1px rgba(251,249,244,0.3)' }}>
-                  {p.num}
+          {STAGES.map(([t, d], i) => (
+            <div key={t} className="flex shrink-0 items-center px-5 pb-6 md:px-10 lg:h-full lg:w-[34vw] lg:px-6 lg:pb-0">
+              <div className="hud relative flex h-full w-full flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.025] p-8 lg:h-[56vh]">
+                <span className="display text-8xl font-bold text-transparent [-webkit-text-stroke:1px_rgba(233,180,76,0.6)] lg:text-[9rem]">
+                  0{i + 1}
                 </span>
-                <div className="relative w-56 opacity-80 transition-opacity duration-500 group-hover:opacity-100">
-                  <Ph variant={p.variant} label={p.title} ratio="aspect-square" />
-                  {p.num === '01' && <Cube size={52} light className="absolute -bottom-7 -left-7" />}
-                  {p.num === '02' && <Gyro size={80} light className="absolute -bottom-9 -left-9" />}
-                  {p.num === '03' && <Deck size={72} className="absolute -bottom-8 -left-8" />}
+                <div>
+                  <h3 className="display text-4xl font-semibold uppercase">{t}</h3>
+                  <p className="mt-3 text-lg text-ivory/65">{d}</p>
                 </div>
               </div>
+            </div>
+          ))}
+          <div className="hidden shrink-0 lg:block lg:w-[18vw]" />
+        </div>
+        <div className="absolute inset-x-10 bottom-10 hidden items-center gap-6 lg:flex">
+          <span className="mono text-mist">Stage <span ref={stageNo} className="text-ivory">01</span>/05</span>
+          <span className="h-px flex-1 bg-white/10">
+            <span data-progress className="block h-px origin-left scale-x-0 bg-gold" />
+          </span>
+          <span className="mono text-mist">Run it. Scale it.</span>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────── TWO PATHS ───────────────────────── */
+function Paths() {
+  const doors = [
+    { k: 'The job', h: 'Become the hire every company fights over.', i: '↗' },
+    { k: 'The business', h: 'Walk out with a business that’s already running.', i: '◎' },
+  ]
+  return (
+    <section id="paths" data-gl="5,0,-0.6,1.2,0.3" className="relative px-5 py-36 md:px-10 md:py-44">
+      <div className="mx-auto max-w-7xl">
+        <p className="mono text-gold" data-scramble>Built for anyone ambitious</p>
+        <h2 data-split className="display mt-6 text-5xl font-semibold uppercase md:text-7xl">Two doors. One outcome.</h2>
+        <div className="mt-14 flex flex-col gap-4 md:flex-row">
+          {doors.map((d, i) => (
+            <Link
+              key={d.k}
+              to="/masterclass"
+              data-fade={i * 0.1}
+             
+              className="group glass hud relative flex min-h-[19rem] flex-1 flex-col md:min-h-[26rem] justify-between overflow-hidden rounded-3xl p-8 transition-[flex-grow] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:hover:flex-[1.5] md:p-12"
+            >
+              <span className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-gold/0 blur-3xl transition-colors duration-700 group-hover:bg-gold/25" />
+              <div className="flex items-start justify-between">
+                <span className="mono text-mist">Door 0{i + 1}</span>
+                <span className="display text-5xl text-gold transition-transform duration-700 group-hover:rotate-45">{d.i}</span>
+              </div>
               <div>
-                <p className="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-brass">Pillar {p.num} / 03</p>
-                <h3 className="mt-4 text-5xl text-paper transition-transform duration-500 group-hover:translate-x-2">{p.title}</h3>
-                <p className="mt-5 max-w-lg font-display text-xl italic leading-snug text-brass">{p.lead}</p>
-                <p className="mt-4 max-w-lg text-[0.95rem] leading-relaxed text-paper/60">{p.copy}</p>
-                <span className="mt-8 inline-flex items-center gap-3 font-mono text-[0.65rem] font-bold uppercase tracking-[0.25em] text-paper/70 transition-colors duration-300 group-hover:text-brass">
-                  Explore {p.title}
-                  <svg className="h-3.5 w-3.5 transition-transform duration-500 group-hover:translate-x-1.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" strokeWidth="1.4" />
-                  </svg>
-                </span>
+                <h3 className="display text-4xl font-semibold uppercase md:text-6xl">{d.k}</h3>
+                <p className="serif mt-4 max-w-md text-2xl text-ivory/80 md:text-3xl">{d.h}</p>
+                <p className="mono mt-8 flex items-center gap-3 text-gold">
+                  <span className="h-px w-8 bg-gold transition-all duration-700 group-hover:w-20" /> 360° operator
+                </p>
               </div>
             </Link>
           ))}
         </div>
       </div>
-
-      {/* mobile: stacked */}
-      <Container className="py-24 lg:hidden">
-        <SectionHead num="04" eyebrow="The Three Learning Pillars" title="Three disciplines. One operating advantage." light />
-        <div className="mt-12 space-y-10">
-          {pillars.map((p) => (
-            <Reveal key={p.title}>
-              <Link to={p.to} className="block border-t border-paper/15 pt-8">
-                <p className="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-brass">Pillar {p.num} / 03</p>
-                <h3 className="mt-3 text-3xl text-paper">{p.title}</h3>
-                <p className="mt-3 font-display italic leading-snug text-brass">{p.lead}</p>
-                <p className="mt-3 text-[0.93rem] leading-relaxed text-paper/60">{p.copy}</p>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
-      </Container>
     </section>
   )
 }
 
-export default function Home() {
+/* ───────────────────────── CTA ───────────────────────── */
+function MasterclassCTA() {
+  const when = useMemo(() => nextSession(), [])
+  const f = formatSession(when)
   return (
-    <>
-      {/* ============ HERO ============ */}
-      <header className="relative overflow-hidden border-b hairline">
-        <Constellation density={60} className="absolute inset-0 opacity-80 [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
-        <div className="bg-dots pointer-events-none absolute left-0 top-24 h-96 w-72 opacity-60 [mask-image:linear-gradient(to_right,black,transparent)]" aria-hidden="true" />
-        <div
-          className="pointer-events-none absolute -right-40 -top-40 h-[36rem] w-[36rem] rounded-full opacity-70"
-          style={{ background: 'radial-gradient(circle, rgba(154,123,45,0.16) 0%, rgba(154,123,45,0) 66%)'
-          }}
-          aria-hidden="true"
-        />
-        <Container className="relative pb-12 pt-32 md:pb-16 md:pt-40 lg:pb-6 lg:pt-24">
-          <div className="grid items-center gap-12 lg:grid-cols-[1.34fr_0.66fr] lg:gap-10">
-            <div>
-              <Reveal>
-                <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[0.58rem] font-bold uppercase tracking-[0.22em] text-ink-soft/70">
-                  <span className="inline-flex items-center gap-2 border hairline bg-paper/70 px-3 py-1.5 backdrop-blur-sm">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brass" aria-hidden="true" />
-                    Systems online — Marketing / AI / Leadership
-                  </span>
-                  <span>[ Cohort 01 — Enrolling ]</span>
-                  <span className="hidden md:inline">SR. PA-2026-IN-001</span>
-                </div>
-              </Reveal>
-              <Reveal delay={60}>
-                <p className="eyebrow flex items-center gap-3">
-                  <span className="rule-grow inline-block h-px w-10 bg-brass" aria-hidden="true" />
-                  Paarth — The Space for Builders, Marketers &amp; Business Leaders
-                </p>
-              </Reveal>
-              <Reveal delay={180} className="mt-6 max-w-xs sm:max-w-sm lg:hidden">
-                <Ph variant="arcs" label="Cohort in session" ratio="aspect-[16/10]" />
-              </Reveal>
-              <h1 className="mt-5 text-[clamp(1.7rem,9.5vw,2.6rem)] leading-[1.04] md:text-[clamp(2.55rem,4.35vw,3.45rem)] lg:max-w-[760px]">
-                <Words>
-                  A degree makes you eligible.{' '}
-                  <em className="serif-i text-brass-deep">Capability makes you chosen.</em>
-                </Words>
-              </h1>
-              <Reveal delay={420}>
-<p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft md:text-lg">
-                  Paarth is a modern space for ambitious students and freshers who refuse to be just another resume.
-                  Learn marketing, AI, and business leadership the way the real world works — and graduate with
-                  capability, a portfolio, and a career edge.
-                </p>
-              </Reveal>
-              <Reveal delay={520}>
-                <div className="mt-6 flex flex-wrap gap-4">
-                  <Button to="/program">View the Flagship Program</Button>
-                  <Button to="/about" variant="outline">Explore Paarth</Button>
-                </div>
-              </Reveal>
-            </div>
+    <section data-gl="6,0,0,1,1" className="relative flex min-h-[100svh] items-center px-5 py-32 md:px-10">
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center text-center">
+        <div data-fade className="flex flex-wrap justify-center gap-2">
+          {['Free', 'Live', `${MASTERCLASS.durationMin} min`].map((t) => (
+            <span key={t} className="mono rounded-full border border-gold/40 px-4 py-2 text-gold">{t}</span>
+          ))}
+        </div>
+        <h2 data-split className="display mt-10 text-5xl font-semibold uppercase md:text-[7rem]">
+          One hour. The whole map.
+        </h2>
+        <p data-fade className="serif mt-8 max-w-xl text-2xl text-ivory/80 md:text-3xl">
+          Leadership, marketing, AI — and how you’ll launch your own business. Live.
+        </p>
+        <p data-fade className="mono mt-10 text-mist">{f.day} · {f.date} · {f.time}</p>
+        <div data-fade className="mt-6"><Countdown target={when} /></div>
+        <div data-fade className="mt-12">
+          <Magnetic>
+            <Link to="/masterclass" className="btn btn-gold !px-9 !py-5 !text-sm">
+              Reserve my free seat <Arrow />
+            </Link>
+          </Magnetic>
+        </div>
+      </div>
+    </section>
+  )
+}
 
-            {/* hero art composition */}
-            <Reveal delay={300} className="relative hidden lg:block">
-              <Parallax speed={7} className="relative">
-                <Ph variant="arcs" label="Cohort in session" ratio="aspect-[4/5]" className="ml-auto w-[78%] max-w-[310px]" />
-                <div className="float-y absolute -bottom-4 right-0 w-[44%] max-w-[160px] shadow-[0_40px_80px_-40px_rgba(23,21,15,0.4)]">
-                  <Ph variant="grid" label="Founder-led workshop" ratio="aspect-square" />
-                </div>
-                <RotatingBadge className="absolute left-0 top-0 h-16 w-16" />
-                <div className="absolute left-0 bottom-12 border hairline bg-paper/90 px-4 py-3 backdrop-blur-sm">
-                  <p className="font-display text-2xl">
-                    50<span className="serif-i text-brass">+</span>
-                  </p>
-                  <p className="mt-1 font-mono text-[0.55rem] font-bold uppercase tracking-[0.18em] text-ink-soft">
-                    Named frameworks
-                  </p>
-                </div>
-              </Parallax>
-            </Reveal>
-          </div>
-
-          {/* stats bar */}
-          <Reveal delay={200}>
-            <div className="mt-10 grid grid-cols-2 gap-6 border-t hairline pt-7 md:grid-cols-4 lg:mt-8 lg:gap-8 lg:pt-5">
-              <Stat value={3} label="Connected disciplines" />
-              <Stat value={23} label="Study clusters" />
-              <Stat value={50} suffix="+" label="Named frameworks" />
-              <Stat value={1} label="Integrated fellowship" />
-            </div>
-          </Reveal>
-          <div className="pointer-events-none absolute bottom-8 left-1/2 hidden -translate-x-1/2 items-center gap-3 md:flex" aria-hidden="true">
-            <span className="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-ink-soft/70">Scroll</span>
-            <span className="relative h-8 w-px overflow-hidden bg-line">
-              <span className="absolute inset-x-0 top-0 h-3 animate-[scrollhint_1.6s_ease-in-out_infinite] bg-brass" />
-            </span>
-          </div>
-        </Container>
-      </header>
-
-      <Ticker items={hooks} />
-
-      {/* ============ WHY PAARTH EXISTS ============ */}
-      <section className="relative py-24 md:py-36">
-        <Gyro size={130} className="absolute right-[8%] top-16 hidden opacity-80 lg:block" />
-        <Container>
-          <div className="grid gap-14 md:grid-cols-[1fr_1.15fr]">
-            <SectionHead num="01" eyebrow="Why Paarth Exists" title="The market has changed. Most education hasn’t." />
-            <div className="space-y-8 md:pt-24">
-              <ScrubText
-                className="text-lg leading-relaxed text-ink"
-                text="Marketing is often taught as platform tactics. AI is often taught as a list of tools. Leadership is often reduced to motivation. Business is often explained in theory, far away from the pressure of execution."
-              />
-              <ScrubText
-                className="font-display text-[1.8rem] italic leading-snug text-ink md:text-[2.1rem]"
-                text="But the real world doesn’t work in silos."
-              />
-              <ScrubText
-                className="text-lg leading-relaxed text-ink"
-                text="Today, the people who create disproportionate value are the ones who can understand markets, communicate clearly, use AI as leverage, build systems, and lead execution. Paarth was built around that reality."
-              />
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* ============ WHAT PAARTH REALLY IS ============ */}
-      <section className="relative border-t hairline bg-cream py-24 md:py-36">
-        <Cube size={56} className="absolute right-[10%] top-20 hidden lg:block" />
-        <Container>
-          <div className="grid gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-            <div className="lg:sticky lg:top-32">
-              <SectionHead
-                num="02"
-                eyebrow="What Paarth Really Is"
-                title="Not a traditional institute. A modern space for business capability."
-                copy="We don’t just teach how to run ads, use prompts, or “be confident.” Paarth is designed to build stronger operators."
-              />
-              <Reveal delay={240}>
-                <div className="mt-10">
-                  <Ph variant="contour" label="The Paarth space" ratio="aspect-[16/10]" />
-                </div>
-              </Reveal>
-            </div>
-            <div className="grid gap-10 sm:grid-cols-2 lg:pt-10">
-              {capabilities.map((c, i) => (
-                <Reveal key={c.title} delay={i * 90}>
-                  <NumberedCard index={i + 1} title={c.title} copy={c.copy} />
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* ============ WHO IT'S FOR ============ */}
-      <section className="relative py-24 md:py-36">
-        <Deck size={100} className="absolute right-[9%] top-24 hidden lg:block" />
-        <Container>
-          <SectionHead
-            num="03"
-            eyebrow="Who Paarth Is For"
-            title="Built for ambitious people at different stages of growth"
-            copy="Whether you’re just starting out or already building something of your own."
-          />
-          <div className="mt-16 grid gap-px overflow-hidden border hairline bg-line sm:grid-cols-2 lg:grid-cols-4">
-            {audiences.map((a, i) => (
-              <Reveal key={a.title} delay={i * 80} className="h-full">
-                <div className="group h-full bg-paper p-8 transition-colors duration-500 hover:bg-cream">
-                  <span className="font-display text-3xl italic text-brass/40 transition-colors duration-500 group-hover:text-brass">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <h3 className="mt-14 text-xl leading-snug">{a.title}</h3>
-                  <p className="mt-3 text-[0.93rem] leading-relaxed text-ink-soft">{a.copy}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      {/* ============ THREE PILLARS — pinned horizontal ============ */}
-      <HorizontalPillars />
-
-      {/* ============ WHY DIFFERENT ============ */}
-      <section className="relative py-24 md:py-36">
-        <Cube size={48} className="absolute left-[6%] top-24 hidden opacity-70 lg:block" />
-        <Container>
-          <SectionHead num="05" eyebrow="Why Paarth Is Different" title="Why Paarth is built differently" />
-          <div className="mt-16 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
-            {differences.map((d, i) => (
-              <Reveal key={d.title} delay={(i % 3) * 90} className="h-full">
-                <NumberedCard index={i + 1} title={d.title} copy={d.copy} />
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <Ticker items={['Not just a course. A more serious way to grow.', 'A place to think better, build better, and lead with more clarity.', 'Frameworks over fluff.', 'Confidence through competence.']} dark />
-
-      {/* ============ OUTCOMES ============ */}
-      <section className="border-t hairline bg-cream py-24 md:py-36">
-        <Container>
-          <div className="grid gap-14 lg:grid-cols-[1fr_1.3fr]">
-            <div>
-              <SectionHead
-                num="06"
-                eyebrow="What Paarth Should Change for You"
-                title="Not just to know more. To operate differently."
-                copy="By the end of a serious Paarth learning experience, you should leave with the ability to:"
-              />
-              <Reveal delay={260}>
-                <div className="mt-10">
-                  <Ph variant="rays" label="Applied learning" ratio="aspect-[16/10]" />
-                </div>
-              </Reveal>
-            </div>
-            <div className="relative lg:pt-24">
-              <Gyro size={110} className="absolute -top-2 right-0 hidden opacity-80 lg:block" />
-              <ListRow items={outcomes} columns={1} />
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* ============ FLAGSHIP ============ */}
-      <section className="py-24 md:py-36">
-        <Container>
-          <Reveal>
-            <div className="hover-lift relative overflow-hidden border hairline bg-paper">
-              <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
-                <div className="px-8 py-14 md:px-16 md:py-20">
-                  <p className="eyebrow flex items-center gap-3">
-                    <span className="inline-block h-px w-10 bg-brass" aria-hidden="true" />
-                    The Flagship Experience
-                  </p>
-                  <h2 className="mt-6 max-w-2xl text-3xl leading-[1.1] md:text-5xl">
-                    The Paarth Growth &amp; <em className="serif-i text-brass-deep">Leadership Fellowship</em>
-                  </h2>
-                  <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
-                    A structured, practical, and serious entry into modern business capability — Marketing, AI, and
-                    Business Leadership brought together in one integrated program.
-                  </p>
-                  <div className="mt-10 flex flex-wrap gap-4">
-                    <Button to="/program">Explore the Program</Button>
-                    <Button to="/admissions" variant="outline">View Admissions</Button>
-                  </div>
-                </div>
-                <div className="relative hidden lg:block">
-                  <Ph variant="arcs" label="Fellowship cohort" ratio="h-full" className="absolute inset-0" />
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </Container>
-      </section>
-
-      {/* ============ FOUNDER TEASER ============ */}
-      <section className="border-t hairline py-24 md:py-36">
-        <Container>
-          <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
-            <Reveal>
-              <div className="relative">
-                <Ph variant="contour" label="Founder portrait" ratio="aspect-[4/5]" />
-                <RotatingBadge className="absolute -right-8 -top-8 h-20 w-20" />
-              </div>
-            </Reveal>
-            <div>
-              <SectionHead num="07" eyebrow="Founder Teaser" title="Built by someone who learned business by building it" />
-              <Reveal delay={200}>
-                <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-soft">
-                  Paarth comes from a simple belief: ambitious people should not have to wait years to learn how
-                  business really works. After starting early, learning through execution, and seeing the gap between
-                  theory and reality, the vision became clear — create a place where practical business capability is
-                  taught with seriousness.
-                </p>
-              </Reveal>
-              <Reveal delay={300}>
-                <Link to="/founder" className="link-rule mt-8 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-brass-deep">
-                  Read the Founder’s Vision
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" strokeWidth="1.4" />
-                  </svg>
-                </Link>
-              </Reveal>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      <CTABand
-        title="If you’re serious about becoming more capable, start here."
-        copy="Paarth is for people who want more than information. If you want to think better, build better, and lead with more clarity in the modern business world, this is where to begin."
-        buttons={[
-          { to: '/apply', label: 'Apply to Paarth', variant: 'paper' },
-          { to: '/admissions', label: 'View Admissions', variant: 'outline' },
-        ]}
-      />
-    </>
+export default function Home({ ready }) {
+  const scope = useRef(null)
+  usePageMotion(scope)
+  return (
+    <div ref={scope}>
+      <Hero ready={ready} />
+      <SkillMarquee />
+      <Manifesto />
+      <Pillars />
+      <Operator />
+      <NoSoftware />
+      <Business />
+      <Paths />
+      <MasterclassCTA />
+    </div>
   )
 }

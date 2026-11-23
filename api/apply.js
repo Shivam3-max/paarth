@@ -1,4 +1,5 @@
 const REQUIRED_FIELDS = ['name', 'email', 'phone', 'stage', 'why', 'goal', 'focus']
+const MASTERCLASS_FIELDS = ['name', 'email', 'phone', 'stage']
 
 function readBody(req) {
   if (req.body && typeof req.body === 'object') {
@@ -43,7 +44,15 @@ function escapeHtml(value = '') {
 }
 
 function applicationHtml(data) {
-  const rows = [
+  const isMasterclass = data.formType === 'masterclass'
+  const rows = isMasterclass ? [
+    ['Full name', data.name],
+    ['Email', data.email],
+    ['WhatsApp', data.phone],
+    ['I am a', data.stage],
+    ['I want', data.goal],
+    ['Session (UTC)', data.session],
+  ] : [
     ['Full name', data.name],
     ['Email', data.email],
     ['Phone', data.phone],
@@ -57,7 +66,7 @@ function applicationHtml(data) {
 
   return `
     <div style="font-family:Arial,sans-serif;color:#17150f;line-height:1.55">
-      <h1 style="font-size:22px;margin:0 0 16px">New Paarth Application</h1>
+      <h1 style="font-size:22px;margin:0 0 16px">${isMasterclass ? 'New Masterclass Registration' : 'New Paarth Application'}</h1>
       <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:720px">
         ${rows
           .filter(([, value]) => String(value || '').trim())
@@ -97,7 +106,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true })
     }
 
-    const missing = REQUIRED_FIELDS.filter((field) => !String(data[field] || '').trim())
+    const isMasterclass = data.formType === 'masterclass'
+    const missing = (isMasterclass ? MASTERCLASS_FIELDS : REQUIRED_FIELDS).filter((field) => !String(data[field] || '').trim())
     if (missing.length) {
       return res.status(400).json({ ok: false, message: 'Please complete all required fields.' })
     }
@@ -128,7 +138,7 @@ export default async function handler(req, res) {
         from,
         to,
         reply_to: data.email,
-        subject: `New Paarth application from ${data.name}`,
+        subject: isMasterclass ? `Masterclass registration: ${data.name}` : `New Paarth application from ${data.name}`,
         html: applicationHtml(data),
       }),
     })

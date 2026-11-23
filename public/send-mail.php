@@ -67,7 +67,10 @@ if (!empty(trim((string) ($data['website'] ?? '')))) {
     respond(200, ['ok' => true]);
 }
 
-$requiredFields = ['name', 'email', 'phone', 'stage', 'why', 'goal', 'focus'];
+$isMasterclass = ($data['formType'] ?? '') === 'masterclass';
+$requiredFields = $isMasterclass
+    ? ['name', 'email', 'phone', 'stage']
+    : ['name', 'email', 'phone', 'stage', 'why', 'goal', 'focus'];
 
 foreach ($requiredFields as $field) {
     if (trim((string) ($data[$field] ?? '')) === '') {
@@ -101,7 +104,14 @@ if ($resendApiKey === '') {
     ]);
 }
 
-$fields = [
+$fields = $isMasterclass ? [
+    'Full name' => $data['name'] ?? '',
+    'Email' => $email,
+    'WhatsApp' => $data['phone'] ?? '',
+    'I am a' => $data['stage'] ?? '',
+    'I want' => $data['goal'] ?? '',
+    'Session (UTC)' => $data['session'] ?? '',
+] : [
     'Full name' => $data['name'] ?? '',
     'Email' => $email,
     'Phone' => $data['phone'] ?? '',
@@ -113,8 +123,8 @@ $fields = [
     'Anything else' => $data['more'] ?? '',
 ];
 
-$subject = 'New Paarth application from ' . trim((string) $data['name']);
-$html = buildHtml($fields);
+$subject = ($isMasterclass ? 'Masterclass registration: ' : 'New Paarth application from ') . trim((string) $data['name']);
+$html = buildHtml($fields, $isMasterclass ? 'New Masterclass Registration' : 'New Paarth Application');
 $resendPayload = [
     'from' => $mailFrom,
     'to' => [$mailTo],
@@ -221,7 +231,7 @@ function envFileCandidates(): array
     ];
 }
 
-function buildHtml(array $fields): string
+function buildHtml(array $fields, string $title): string
 {
     $rows = '';
 
@@ -243,7 +253,7 @@ function buildHtml(array $fields): string
     }
 
     return '<div style="font-family:Arial,sans-serif;color:#17150f;line-height:1.55">'
-        . '<h1 style="font-size:22px;margin:0 0 16px">New Paarth Application</h1>'
+        . '<h1 style="font-size:22px;margin:0 0 16px">' . escapeHtml($title) . '</h1>'
         . '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:720px">'
         . $rows
         . '</table>'
